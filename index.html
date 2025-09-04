@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Daftar Hadir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">📋 Aplikasi Daftar Hadir</h1>
+                    <p class="text-gray-600">Kelola presensi siswa dengan mudah dan efisien</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="showAddStudentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        ➕ Tambah Siswa
+                    </button>
+                    <button onclick="showImportModal()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        📥 Import Data
+                    </button>
+                    <button onclick="exportData()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        📤 Export
+                    </button>
+                    <button onclick="showSyncModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        ☁️ Sinkronisasi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Total Siswa</p>
+                        <p id="totalStudents" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <span class="text-2xl">👥</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Hadir Hari Ini</p>
+                        <p id="presentToday" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <span class="text-2xl">✅</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Tidak Hadir</p>
+                        <p id="absentToday" class="text-2xl font-bold text-red-600">0</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <span class="text-2xl">❌</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Persentase Hadir</p>
+                        <p id="attendanceRate" class="text-2xl font-bold text-indigo-600">0%</p>
+                    </div>
+                    <div class="bg-indigo-100 p-3 rounded-full">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white rounded-2xl shadow-lg mb-6 fade-in">
+            <div class="flex flex-wrap border-b border-gray-200">
+                <button onclick="showTab('attendance')" id="attendanceTab" class="tab-button px-6 py-4 font-medium text-blue-600 border-b-2 border-blue-600">
+                    📝 Presensi Hari Ini
+                </button>
+                <button onclick="showTab('history')" id="historyTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    📅 Riwayat Presensi
+                </button>
+                <button onclick="showTab('reports')" id="reportsTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    📈 Laporan
+                </button>
+                <button onclick="showTab('journal')" id="journalTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    📚 Jurnal Pembelajaran
+                </button>
+                <button onclick="showTab('students')" id="studentsTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    👥 Kelola Siswa
+                </button>
+            </div>
+
+            <!-- Attendance Tab -->
+            <div id="attendanceContent" class="tab-content p-6">
+                <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                    <div class="flex-1">
+                        <input type="text" id="searchStudent" placeholder="🔍 Cari nama siswa..." 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="markAllPresent()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                            ✅ Semua Hadir
+                        </button>
+                        <button onclick="markAllAbsent()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                            ❌ Semua Tidak Hadir
+                        </button>
+                        <button onclick="resetAttendance()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+                <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Student cards will be populated here -->
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyContent" class="tab-content p-6 hidden">
+                <div class="flex flex-col lg:flex-row gap-4 mb-6">
+                    <input type="date" id="historyDate" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <button onclick="loadHistoryForDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+                        📅 Lihat Riwayat
+                    </button>
+                </div>
+                <div id="historyList" class="space-y-4">
+                    <!-- History will be populated here -->
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reportsContent" class="tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">📊 Statistik Kehadiran</h3>
+                        <div id="attendanceStats" class="space-y-3">
+                            <!-- Stats will be populated here -->
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">🏆 Siswa Terbaik</h3>
+                        <div id="topStudents" class="space-y-3">
+                            <!-- Top students will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journal Tab -->
+            <div id="journalContent" class="tab-content p-6 hidden">
+                <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                    <button onclick="showAddJournalModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        ➕ Tambah Jurnal Hari Ini
+                    </button>
+                    <select id="filterJournalClass" onchange="filterJournalByClass()" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Kelas</option>
+                    </select>
+                    <input type="date" id="filterJournalDate" onchange="filterJournalByDate()" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="journalList" class="space-y-4">
+                    <!-- Journal entries will be populated here -->
+                </div>
+            </div>
+
+            <!-- Students Management Tab -->
+            <div id="studentsContent" class="tab-content p-6 hidden">
+                <div class="mb-6">
+                    <input type="text" id="searchAllStudents" placeholder="🔍 Cari siswa untuk diedit atau dihapus..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="allStudentsList" class="space-y-3">
+                    <!-- All students list will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 fade-in">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">➕ Tambah Siswa Baru</h2>
+            <div class="space-y-4">
+                <input type="text" id="studentName" placeholder="Nama lengkap siswa" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="studentId" placeholder="NIS/ID Siswa (opsional)" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="studentClass" placeholder="Kelas (contoh: XII IPA 1)" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="addStudent()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium">
+                    Tambah
+                </button>
+                <button onclick="closeAddStudentModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Journal Modal -->
+    <div id="addJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 fade-in max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">📚 Tambah Jurnal Pembelajaran</h2>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="date" id="journalDate" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <select id="journalClass" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        <option value="">Pilih Kelas</option>
+                    </select>
+                </div>
+                <input type="text" id="journalSubject" placeholder="Mata Pelajaran (contoh: Matematika, Bahasa Indonesia)" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="journalTopic" placeholder="Topik/Materi Pembelajaran" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <textarea id="journalDescription" rows="4" placeholder="Deskripsi detail pembelajaran, aktivitas, dan catatan penting..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" id="journalStartTime" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <input type="time" id="journalEndTime" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+                <textarea id="journalNotes" rows="3" placeholder="Catatan tambahan, evaluasi, atau rencana tindak lanjut..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="addJournalEntry()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium">
+                    Simpan Jurnal
+                </button>
+                <button onclick="closeAddJournalModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 fade-in">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">📥 Import Data Siswa</h2>
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl">
+                    <p class="text-sm text-blue-800 mb-2"><strong>Format:</strong> Satu siswa per baris</p>
+                    <p class="text-sm text-blue-700">Nama | NIS | Kelas (pisahkan dengan |)</p>
+                    <p class="text-sm text-blue-600 mt-1"><em>Contoh: Ahmad Rizki | 12345 | XII IPA 1</em></p>
+                </div>
+                <textarea id="importData" rows="8" placeholder="Masukkan data siswa di sini..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="importStudents()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium">
+                    Import
+                </button>
+                <button onclick="closeImportModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Modal -->
+    <div id="syncModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 fade-in max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">☁️ Sinkronisasi Data</h2>
+            
+            <!-- Sync Options -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-blue-50 p-6 rounded-xl border-2 border-blue-200">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-3">📤 Backup Data</h3>
+                    <p class="text-sm text-blue-700 mb-4">Simpan semua data Anda ke file atau kode backup yang bisa digunakan di device lain</p>
+                    <button onclick="generateBackupCode()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium">
+                        Buat Backup
+                    </button>
+                </div>
+                
+                <div class="bg-green-50 p-6 rounded-xl border-2 border-green-200">
+                    <h3 class="text-lg font-semibold text-green-800 mb-3">📥 Restore Data</h3>
+                    <p class="text-sm text-green-700 mb-4">Pulihkan data dari file backup atau kode backup yang sudah Anda buat sebelumnya</p>
+                    <button onclick="showRestoreForm()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium">
+                        Pulihkan Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Backup Code Display -->
+            <div id="backupCodeSection" class="hidden mb-6">
+                <div class="bg-gray-50 p-6 rounded-xl border-2 border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">💾 Backup Berhasil Dibuat!</h3>
+                    
+                    <!-- Download Options -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <button onclick="downloadBackupFile()" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium">
+                            📄 Download JSON
+                        </button>
+                        <button onclick="downloadBackupTxt()" class="bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium">
+                            📝 Download TXT
+                        </button>
+                        <button onclick="copyBackupCode()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium">
+                            📋 Salin Kode
+                        </button>
+                    </div>
+                    
+                    <!-- Code Display -->
+                    <div class="bg-white p-4 rounded-lg border border-gray-300 mb-4">
+                        <textarea id="backupCodeDisplay" readonly rows="6" class="w-full text-sm font-mono resize-none border-none focus:outline-none"></textarea>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-blue-800">
+                            <strong>💡 Rekomendasi:</strong><br>
+                            • <strong>File JSON</strong> - Paling mudah untuk transfer antar device<br>
+                            • <strong>File TXT</strong> - Kompatibel dengan semua aplikasi<br>
+                            • <strong>Salin Kode</strong> - Untuk transfer cepat via chat/email
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restore Form -->
+            <div id="restoreFormSection" class="hidden mb-6">
+                <div class="bg-yellow-50 p-6 rounded-xl border-2 border-yellow-200">
+                    <h3 class="text-lg font-semibold text-yellow-800 mb-3">⚠️ Pulihkan Data</h3>
+                    <p class="text-sm text-yellow-700 mb-4">Pilih file backup atau masukkan kode backup untuk memulihkan data. <strong>Perhatian:</strong> Ini akan mengganti semua data yang ada saat ini.</p>
+                    
+                    <!-- File Upload Option -->
+                    <div class="mb-4 p-4 bg-white rounded-lg border-2 border-dashed border-yellow-300">
+                        <label class="block text-sm font-medium text-yellow-800 mb-2">📁 Pilih File Backup:</label>
+                        <input type="file" id="backupFileInput" accept=".json,.txt" 
+                               class="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm"
+                               onchange="loadBackupFile()">
+                        <p class="text-xs text-yellow-600 mt-1">File yang didukung: .json, .txt</p>
+                    </div>
+                    
+                    <!-- Manual Code Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-yellow-800 mb-2">📝 Atau Tempel Kode Backup:</label>
+                        <textarea id="restoreCodeInput" rows="6" placeholder="Tempel kode backup di sini..." 
+                                  class="w-full px-4 py-3 border border-yellow-300 rounded-xl focus:ring-2 focus:ring-yellow-500 text-sm font-mono"></textarea>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="restoreFromBackup()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-xl font-medium">
+                            🔄 Pulihkan Data
+                        </button>
+                        <button onclick="hideRestoreForm()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-indigo-50 p-6 rounded-xl border-2 border-indigo-200 mb-6">
+                <h3 class="text-lg font-semibold text-indigo-800 mb-3">📖 Cara Sinkronisasi Cross-Platform</h3>
+                <ol class="text-sm text-indigo-700 space-y-2">
+                    <li><strong>1. Backup:</strong> Klik "Buat Backup" dan pilih "Download JSON" (paling mudah)</li>
+                    <li><strong>2. Transfer:</strong> Kirim file via email, WhatsApp, atau simpan di Google Drive</li>
+                    <li><strong>3. Restore:</strong> Di device lain, pilih file backup dan klik "Pulihkan Data"</li>
+                    <li><strong>4. Verifikasi:</strong> Pastikan semua data sudah ter-load dengan benar</li>
+                </ol>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeSyncModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage using localStorage for persistence
+        let students = JSON.parse(localStorage.getItem('attendanceStudents')) || [];
+        let attendanceHistory = JSON.parse(localStorage.getItem('attendanceHistory')) || {};
+        let learningJournal = JSON.parse(localStorage.getItem('learningJournal')) || [];
+        
+        // Get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('attendanceStudents', JSON.stringify(students));
+            localStorage.setItem('attendanceHistory', JSON.stringify(attendanceHistory));
+            localStorage.setItem('learningJournal', JSON.stringify(learningJournal));
+        }
+
+        // Initialize today's attendance if not exists
+        function initTodayAttendance() {
+            const today = getTodayDate();
+            if (!attendanceHistory[today]) {
+                attendanceHistory[today] = {};
+                students.forEach(student => {
+                    attendanceHistory[today][student.id] = 'not_marked';
+                });
+                saveData();
+            }
+        }
+
+        // Generate unique ID for students
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Update statistics
+        function updateStats() {
+            const today = getTodayDate();
+            const todayAttendance = attendanceHistory[today] || {};
+            
+            const totalStudents = students.length;
+            const presentCount = Object.values(todayAttendance).filter(status => status === 'present').length;
+            const absentCount = Object.values(todayAttendance).filter(status => status === 'absent').length;
+            const attendanceRate = totalStudents > 0 ? Math.round((presentCount / totalStudents) * 100) : 0;
+
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('presentToday').textContent = presentCount;
+            document.getElementById('absentToday').textContent = absentCount;
+            document.getElementById('attendanceRate').textContent = attendanceRate + '%';
+        }
+
+        // Render student list for attendance
+        function renderStudentList(searchTerm = '') {
+            const today = getTodayDate();
+            const todayAttendance = attendanceHistory[today] || {};
+            const studentList = document.getElementById('studentList');
+            
+            const filteredStudents = students.filter(student => 
+                student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                student.class.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            studentList.innerHTML = filteredStudents.map(student => {
+                const status = todayAttendance[student.id] || 'not_marked';
+                const statusClass = status === 'present' ? 'border-green-500 bg-green-50' : 
+                                  status === 'absent' ? 'border-red-500 bg-red-50' : 'border-gray-300';
+                const statusIcon = status === 'present' ? '✅' : status === 'absent' ? '❌' : '⏳';
+                
+                return `
+                    <div class="border-2 ${statusClass} rounded-xl p-4 transition-all duration-200 slide-in">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800">${student.name}</h3>
+                                <p class="text-sm text-gray-600">${student.studentId} • ${student.class}</p>
+                            </div>
+                            <span class="text-2xl">${statusIcon}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="markAttendance('${student.id}', 'present')" 
+                                    class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200">
+                                Hadir
+                            </button>
+                            <button onclick="markAttendance('${student.id}', 'absent')" 
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200">
+                                Tidak Hadir
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mark attendance for a student
+        function markAttendance(studentId, status) {
+            const today = getTodayDate();
+            if (!attendanceHistory[today]) {
+                attendanceHistory[today] = {};
+            }
+            attendanceHistory[today][studentId] = status;
+            saveData();
+            renderStudentList(document.getElementById('searchStudent').value);
+            updateStats();
+        }
+
+        // Mark all students present
+        function markAllPresent() {
+            const today = getTodayDate();
+            if (!attendanceHistory[today]) {
+                attendanceHistory[today] = {};
+            }
+            students.forEach(student => {
+                attendanceHistory[today][student.id] = 'present';
+            });
+            saveData();
+            renderStudentList(document.getElementById('searchStudent').value);
+            updateStats();
+        }
+
+        // Mark all students absent
+        function markAllAbsent() {
+            const today = getTodayDate();
+            if (!attendanceHistory[today]) {
+                attendanceHistory[today] = {};
+            }
+            students.forEach(student => {
+                attendanceHistory[today][student.id] = 'absent';
+            });
+            saveData();
+            renderStudentList(document.getElementById('searchStudent').value);
+            updateStats();
+        }
+
+        // Reset today's attendance
+        function resetAttendance() {
+            if (confirm('Apakah Anda yakin ingin mereset presensi hari ini?')) {
+                const today = getTodayDate();
+                attendanceHistory[today] = {};
+                students.forEach(student => {
+                    attendanceHistory[today][student.id] = 'not_marked';
+                });
+                saveData();
+                renderStudentList(document.getElementById('searchStudent').value);
+                updateStats();
+            }
+        }
+
+        // Show/hide tabs
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                button.classList.add('text-gray-500');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + 'Content').classList.remove('hidden');
+            
+            // Add active class to selected tab
+            const activeTab = document.getElementById(tabName + 'Tab');
+            activeTab.classList.remove('text-gray-500');
+            activeTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+            
+            // Load content based on tab
+            if (tabName === 'history') {
+                loadRecentHistory();
+            } else if (tabName === 'reports') {
+                loadReports();
+            } else if (tabName === 'journal') {
+                loadJournalEntries();
+                populateJournalClassOptions();
+            } else if (tabName === 'students') {
+                renderAllStudentsList();
+            }
+        }
+
+        // Load history for a specific date
+        function loadHistoryForDate() {
+            const selectedDate = document.getElementById('historyDate').value;
+            if (!selectedDate) {
+                alert('Pilih tanggal terlebih dahulu');
+                return;
+            }
+            
+            const historyList = document.getElementById('historyList');
+            const dayAttendance = attendanceHistory[selectedDate];
+            
+            if (!dayAttendance) {
+                historyList.innerHTML = '<p class="text-gray-500 text-center py-8">Tidak ada data presensi untuk tanggal ini</p>';
+                return;
+            }
+            
+            const presentStudents = students.filter(student => dayAttendance[student.id] === 'present');
+            const absentStudents = students.filter(student => dayAttendance[student.id] === 'absent');
+            
+            historyList.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-green-800 mb-4">✅ Siswa Hadir (${presentStudents.length})</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        ${presentStudents.map(student => `
+                            <div class="bg-white p-3 rounded-lg border border-green-200">
+                                <p class="font-medium">${student.name}</p>
+                                <p class="text-sm text-gray-600">${student.class}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-red-800 mb-4">❌ Siswa Tidak Hadir (${absentStudents.length})</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        ${absentStudents.map(student => `
+                            <div class="bg-white p-3 rounded-lg border border-red-200">
+                                <p class="font-medium">${student.name}</p>
+                                <p class="text-sm text-gray-600">${student.class}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load recent history
+        function loadRecentHistory() {
+            const historyList = document.getElementById('historyList');
+            const recentDates = Object.keys(attendanceHistory).sort().reverse().slice(0, 7);
+            
+            if (recentDates.length === 0) {
+                historyList.innerHTML = '<p class="text-gray-500 text-center py-8">Belum ada riwayat presensi</p>';
+                return;
+            }
+            
+            historyList.innerHTML = recentDates.map(date => {
+                const dayAttendance = attendanceHistory[date];
+                const presentCount = Object.values(dayAttendance).filter(status => status === 'present').length;
+                const absentCount = Object.values(dayAttendance).filter(status => status === 'absent').length;
+                const totalCount = students.length;
+                const percentage = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
+                
+                return `
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">${new Date(date).toLocaleDateString('id-ID', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            })}</h3>
+                            <span class="text-2xl font-bold text-blue-600">${percentage}%</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">${presentCount}</p>
+                                <p class="text-sm text-gray-600">Hadir</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-red-600">${absentCount}</p>
+                                <p class="text-sm text-gray-600">Tidak Hadir</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-gray-600">${totalCount}</p>
+                                <p class="text-sm text-gray-600">Total</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Load reports
+        function loadReports() {
+            const attendanceStats = document.getElementById('attendanceStats');
+            const topStudents = document.getElementById('topStudents');
+            
+            // Calculate attendance statistics
+            const dates = Object.keys(attendanceHistory);
+            const totalDays = dates.length;
+            
+            if (totalDays === 0) {
+                attendanceStats.innerHTML = '<p class="text-gray-500">Belum ada data untuk laporan</p>';
+                topStudents.innerHTML = '<p class="text-gray-500">Belum ada data untuk laporan</p>';
+                return;
+            }
+            
+            // Calculate student attendance rates
+            const studentStats = students.map(student => {
+                let presentDays = 0;
+                dates.forEach(date => {
+                    if (attendanceHistory[date][student.id] === 'present') {
+                        presentDays++;
+                    }
+                });
+                return {
+                    ...student,
+                    presentDays,
+                    attendanceRate: totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0
+                };
+            });
+            
+            // Sort by attendance rate
+            studentStats.sort((a, b) => b.attendanceRate - a.attendanceRate);
+            
+            // Overall statistics
+            const totalPresent = dates.reduce((sum, date) => {
+                return sum + Object.values(attendanceHistory[date]).filter(status => status === 'present').length;
+            }, 0);
+            const totalPossible = totalDays * students.length;
+            const overallRate = totalPossible > 0 ? Math.round((totalPresent / totalPossible) * 100) : 0;
+            
+            attendanceStats.innerHTML = `
+                <div class="flex justify-between items-center p-4 bg-white rounded-lg border">
+                    <span class="font-medium">Total Hari Presensi</span>
+                    <span class="font-bold text-blue-600">${totalDays} hari</span>
+                </div>
+                <div class="flex justify-between items-center p-4 bg-white rounded-lg border">
+                    <span class="font-medium">Rata-rata Kehadiran</span>
+                    <span class="font-bold text-green-600">${overallRate}%</span>
+                </div>
+                <div class="flex justify-between items-center p-4 bg-white rounded-lg border">
+                    <span class="font-medium">Total Kehadiran</span>
+                    <span class="font-bold text-indigo-600">${totalPresent} dari ${totalPossible}</span>
+                </div>
+            `;
+            
+            // Top 10 students
+            topStudents.innerHTML = studentStats.slice(0, 10).map((student, index) => `
+                <div class="flex items-center justify-between p-4 bg-white rounded-lg border">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">${index < 3 ? ['🥇', '🥈', '🥉'][index] : '🏅'}</span>
+                        <div>
+                            <p class="font-medium">${student.name}</p>
+                            <p class="text-sm text-gray-600">${student.class}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-green-600">${student.attendanceRate}%</p>
+                        <p class="text-sm text-gray-600">${student.presentDays}/${totalDays} hari</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render all students list for management
+        function renderAllStudentsList(searchTerm = '') {
+            const allStudentsList = document.getElementById('allStudentsList');
+            
+            const filteredStudents = students.filter(student => 
+                student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                student.class.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            allStudentsList.innerHTML = filteredStudents.map(student => `
+                <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow">
+                    <div>
+                        <h3 class="font-semibold text-gray-800">${student.name}</h3>
+                        <p class="text-sm text-gray-600">${student.studentId} • ${student.class}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editStudent('${student.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            ✏️ Edit
+                        </button>
+                        <button onclick="deleteStudent('${student.id}')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                            🗑️ Hapus
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal functions
+        function showAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('hidden');
+            document.getElementById('addStudentModal').classList.add('flex');
+            document.getElementById('studentName').focus();
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.add('hidden');
+            document.getElementById('addStudentModal').classList.remove('flex');
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentId').value = '';
+            document.getElementById('studentClass').value = '';
+        }
+
+        function showImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+            document.getElementById('importModal').classList.add('flex');
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+            document.getElementById('importModal').classList.remove('flex');
+            document.getElementById('importData').value = '';
+        }
+
+        // Add student
+        function addStudent() {
+            const name = document.getElementById('studentName').value.trim();
+            const studentId = document.getElementById('studentId').value.trim() || 'N/A';
+            const studentClass = document.getElementById('studentClass').value.trim() || 'N/A';
+            
+            if (!name) {
+                alert('Nama siswa harus diisi');
+                return;
+            }
+            
+            const newStudent = {
+                id: generateId(),
+                name,
+                studentId,
+                class: studentClass
+            };
+            
+            students.push(newStudent);
+            
+            // Add to all existing attendance records
+            Object.keys(attendanceHistory).forEach(date => {
+                attendanceHistory[date][newStudent.id] = 'not_marked';
+            });
+            
+            saveData();
+            closeAddStudentModal();
+            renderStudentList();
+            updateStats();
+            
+            alert('Siswa berhasil ditambahkan!');
+        }
+
+        // Import students
+        function importStudents() {
+            const importData = document.getElementById('importData').value.trim();
+            if (!importData) {
+                alert('Masukkan data siswa terlebih dahulu');
+                return;
+            }
+            
+            const lines = importData.split('\n').filter(line => line.trim());
+            let importedCount = 0;
+            
+            lines.forEach(line => {
+                const parts = line.split('|').map(part => part.trim());
+                if (parts.length >= 1 && parts[0]) {
+                    const newStudent = {
+                        id: generateId(),
+                        name: parts[0],
+                        studentId: parts[1] || 'N/A',
+                        class: parts[2] || 'N/A'
+                    };
+                    
+                    students.push(newStudent);
+                    
+                    // Add to all existing attendance records
+                    Object.keys(attendanceHistory).forEach(date => {
+                        attendanceHistory[date][newStudent.id] = 'not_marked';
+                    });
+                    
+                    importedCount++;
+                }
+            });
+            
+            saveData();
+            closeImportModal();
+            renderStudentList();
+            updateStats();
+            
+            alert(`${importedCount} siswa berhasil diimport!`);
+        }
+
+        // Edit student
+        function editStudent(studentId) {
+            const student = students.find(s => s.id === studentId);
+            if (!student) return;
+            
+            const newName = prompt('Nama baru:', student.name);
+            if (newName === null) return;
+            
+            const newStudentId = prompt('NIS/ID baru:', student.studentId);
+            if (newStudentId === null) return;
+            
+            const newClass = prompt('Kelas baru:', student.class);
+            if (newClass === null) return;
+            
+            student.name = newName.trim() || student.name;
+            student.studentId = newStudentId.trim() || student.studentId;
+            student.class = newClass.trim() || student.class;
+            
+            saveData();
+            renderAllStudentsList(document.getElementById('searchAllStudents').value);
+            renderStudentList(document.getElementById('searchStudent').value);
+            
+            alert('Data siswa berhasil diperbarui!');
+        }
+
+        // Delete student
+        function deleteStudent(studentId) {
+            const student = students.find(s => s.id === studentId);
+            if (!student) return;
+            
+            if (confirm(`Apakah Anda yakin ingin menghapus ${student.name}? Data presensi siswa ini juga akan terhapus.`)) {
+                students = students.filter(s => s.id !== studentId);
+                
+                // Remove from all attendance records
+                Object.keys(attendanceHistory).forEach(date => {
+                    delete attendanceHistory[date][studentId];
+                });
+                
+                saveData();
+                renderAllStudentsList(document.getElementById('searchAllStudents').value);
+                renderStudentList(document.getElementById('searchStudent').value);
+                updateStats();
+                
+                alert('Siswa berhasil dihapus!');
+            }
+        }
+
+        // Journal Functions
+        function showAddJournalModal() {
+            document.getElementById('addJournalModal').classList.remove('hidden');
+            document.getElementById('addJournalModal').classList.add('flex');
+            
+            // Set today's date as default
+            document.getElementById('journalDate').value = getTodayDate();
+            
+            // Populate class options
+            populateJournalClassOptionsInModal();
+            
+            document.getElementById('journalSubject').focus();
+        }
+
+        function closeAddJournalModal() {
+            document.getElementById('addJournalModal').classList.add('hidden');
+            document.getElementById('addJournalModal').classList.remove('flex');
+            
+            // Clear form
+            document.getElementById('journalDate').value = '';
+            document.getElementById('journalClass').value = '';
+            document.getElementById('journalSubject').value = '';
+            document.getElementById('journalTopic').value = '';
+            document.getElementById('journalDescription').value = '';
+            document.getElementById('journalStartTime').value = '';
+            document.getElementById('journalEndTime').value = '';
+            document.getElementById('journalNotes').value = '';
+        }
+
+        function populateJournalClassOptionsInModal() {
+            const classSelect = document.getElementById('journalClass');
+            const uniqueClasses = [...new Set(students.map(student => student.class))].filter(cls => cls !== 'N/A');
+            
+            classSelect.innerHTML = '<option value="">Pilih Kelas</option>';
+            uniqueClasses.forEach(className => {
+                classSelect.innerHTML += `<option value="${className}">${className}</option>`;
+            });
+        }
+
+        function populateJournalClassOptions() {
+            const filterSelect = document.getElementById('filterJournalClass');
+            const uniqueClasses = [...new Set(learningJournal.map(entry => entry.class))].filter(cls => cls);
+            
+            filterSelect.innerHTML = '<option value="">Semua Kelas</option>';
+            uniqueClasses.forEach(className => {
+                filterSelect.innerHTML += `<option value="${className}">${className}</option>`;
+            });
+        }
+
+        function addJournalEntry() {
+            const date = document.getElementById('journalDate').value;
+            const className = document.getElementById('journalClass').value;
+            const subject = document.getElementById('journalSubject').value.trim();
+            const topic = document.getElementById('journalTopic').value.trim();
+            const description = document.getElementById('journalDescription').value.trim();
+            const startTime = document.getElementById('journalStartTime').value;
+            const endTime = document.getElementById('journalEndTime').value;
+            const notes = document.getElementById('journalNotes').value.trim();
+            
+            if (!date || !className || !subject || !topic) {
+                alert('Harap isi semua field yang wajib (tanggal, kelas, mata pelajaran, dan topik)');
+                return;
+            }
+            
+            const newEntry = {
+                id: generateId(),
+                date,
+                class: className,
+                subject,
+                topic,
+                description,
+                startTime,
+                endTime,
+                notes,
+                createdAt: new Date().toISOString()
+            };
+            
+            learningJournal.unshift(newEntry); // Add to beginning of array
+            saveData();
+            closeAddJournalModal();
+            loadJournalEntries();
+            
+            alert('Jurnal pembelajaran berhasil disimpan!');
+        }
+
+        function loadJournalEntries() {
+            const journalList = document.getElementById('journalList');
+            const filterClass = document.getElementById('filterJournalClass').value;
+            const filterDate = document.getElementById('filterJournalDate').value;
+            
+            let filteredEntries = learningJournal;
+            
+            if (filterClass) {
+                filteredEntries = filteredEntries.filter(entry => entry.class === filterClass);
+            }
+            
+            if (filterDate) {
+                filteredEntries = filteredEntries.filter(entry => entry.date === filterDate);
+            }
+            
+            if (filteredEntries.length === 0) {
+                journalList.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📚</div>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Belum Ada Jurnal Pembelajaran</h3>
+                        <p class="text-gray-500 mb-6">Mulai catat aktivitas pembelajaran Anda hari ini</p>
+                        <button onclick="showAddJournalModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+                            ➕ Tambah Jurnal Pertama
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            journalList.innerHTML = filteredEntries.map(entry => {
+                const entryDate = new Date(entry.date);
+                const formattedDate = entryDate.toLocaleDateString('id-ID', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                const timeRange = entry.startTime && entry.endTime ? 
+                    `${entry.startTime} - ${entry.endTime}` : 
+                    entry.startTime ? `Mulai: ${entry.startTime}` : '';
+                
+                return `
+                    <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow slide-in">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">${entry.class}</span>
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">${entry.subject}</span>
+                                    ${timeRange ? `<span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">⏰ ${timeRange}</span>` : ''}
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800 mb-1">${entry.topic}</h3>
+                                <p class="text-sm text-gray-600">${formattedDate}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="editJournalEntry('${entry.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm">
+                                    ✏️ Edit
+                                </button>
+                                <button onclick="deleteJournalEntry('${entry.id}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm">
+                                    🗑️ Hapus
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${entry.description ? `
+                            <div class="mb-4">
+                                <h4 class="font-medium text-gray-700 mb-2">📝 Deskripsi Pembelajaran:</h4>
+                                <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">${entry.description}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${entry.notes ? `
+                            <div>
+                                <h4 class="font-medium text-gray-700 mb-2">💡 Catatan Tambahan:</h4>
+                                <p class="text-gray-600 bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400">${entry.notes}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterJournalByClass() {
+            loadJournalEntries();
+        }
+
+        function filterJournalByDate() {
+            loadJournalEntries();
+        }
+
+        function editJournalEntry(entryId) {
+            const entry = learningJournal.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            // Fill modal with existing data
+            document.getElementById('journalDate').value = entry.date;
+            document.getElementById('journalSubject').value = entry.subject;
+            document.getElementById('journalTopic').value = entry.topic;
+            document.getElementById('journalDescription').value = entry.description || '';
+            document.getElementById('journalStartTime').value = entry.startTime || '';
+            document.getElementById('journalEndTime').value = entry.endTime || '';
+            document.getElementById('journalNotes').value = entry.notes || '';
+            
+            populateJournalClassOptionsInModal();
+            document.getElementById('journalClass').value = entry.class;
+            
+            // Change button text and function
+            const saveButton = document.querySelector('#addJournalModal button[onclick="addJournalEntry()"]');
+            saveButton.textContent = 'Update Jurnal';
+            saveButton.setAttribute('onclick', `updateJournalEntry('${entryId}')`);
+            
+            showAddJournalModal();
+        }
+
+        function updateJournalEntry(entryId) {
+            const date = document.getElementById('journalDate').value;
+            const className = document.getElementById('journalClass').value;
+            const subject = document.getElementById('journalSubject').value.trim();
+            const topic = document.getElementById('journalTopic').value.trim();
+            const description = document.getElementById('journalDescription').value.trim();
+            const startTime = document.getElementById('journalStartTime').value;
+            const endTime = document.getElementById('journalEndTime').value;
+            const notes = document.getElementById('journalNotes').value.trim();
+            
+            if (!date || !className || !subject || !topic) {
+                alert('Harap isi semua field yang wajib (tanggal, kelas, mata pelajaran, dan topik)');
+                return;
+            }
+            
+            const entryIndex = learningJournal.findIndex(e => e.id === entryId);
+            if (entryIndex !== -1) {
+                learningJournal[entryIndex] = {
+                    ...learningJournal[entryIndex],
+                    date,
+                    class: className,
+                    subject,
+                    topic,
+                    description,
+                    startTime,
+                    endTime,
+                    notes,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                saveData();
+                closeAddJournalModal();
+                loadJournalEntries();
+                
+                // Reset button
+                const saveButton = document.querySelector('#addJournalModal button[onclick^="updateJournalEntry"]');
+                saveButton.textContent = 'Simpan Jurnal';
+                saveButton.setAttribute('onclick', 'addJournalEntry()');
+                
+                alert('Jurnal pembelajaran berhasil diperbarui!');
+            }
+        }
+
+        function deleteJournalEntry(entryId) {
+            const entry = learningJournal.find(e => e.id === entryId);
+            if (!entry) return;
+            
+            if (confirm(`Apakah Anda yakin ingin menghapus jurnal "${entry.topic}" untuk kelas ${entry.class}?`)) {
+                learningJournal = learningJournal.filter(e => e.id !== entryId);
+                saveData();
+                loadJournalEntries();
+                populateJournalClassOptions();
+                
+                alert('Jurnal pembelajaran berhasil dihapus!');
+            }
+        }
+
+        // Export data
+        function exportData() {
+            const today = getTodayDate();
+            const todayAttendance = attendanceHistory[today] || {};
+            
+            let csvContent = "Nama,NIS,Kelas,Status Hari Ini,Total Hadir,Total Hari,Persentase Kehadiran\n";
+            
+            const dates = Object.keys(attendanceHistory);
+            const totalDays = dates.length;
+            
+            students.forEach(student => {
+                let presentDays = 0;
+                dates.forEach(date => {
+                    if (attendanceHistory[date][student.id] === 'present') {
+                        presentDays++;
+                    }
+                });
+                
+                const todayStatus = todayAttendance[student.id] === 'present' ? 'Hadir' : 
+                                 todayAttendance[student.id] === 'absent' ? 'Tidak Hadir' : 'Belum Dicatat';
+                const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+                
+                csvContent += `"${student.name}","${student.studentId}","${student.class}","${todayStatus}",${presentDays},${totalDays},${attendanceRate}%\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `presensi_${today}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Sync Functions
+        function showSyncModal() {
+            document.getElementById('syncModal').classList.remove('hidden');
+            document.getElementById('syncModal').classList.add('flex');
+            
+            // Hide sections initially
+            document.getElementById('backupCodeSection').classList.add('hidden');
+            document.getElementById('restoreFormSection').classList.add('hidden');
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').classList.add('hidden');
+            document.getElementById('syncModal').classList.remove('flex');
+            
+            // Clear forms
+            document.getElementById('backupCodeDisplay').value = '';
+            document.getElementById('restoreCodeInput').value = '';
+            document.getElementById('backupFileInput').value = '';
+            
+            // Hide sections
+            document.getElementById('backupCodeSection').classList.add('hidden');
+            document.getElementById('restoreFormSection').classList.add('hidden');
+        }
+
+        // Global variable to store backup data
+        let currentBackupData = null;
+
+        function generateBackupCode() {
+            try {
+                const backupData = {
+                    version: '2.0',
+                    timestamp: new Date().toISOString(),
+                    students: students,
+                    attendanceHistory: attendanceHistory,
+                    learningJournal: learningJournal,
+                    appInfo: {
+                        name: 'Aplikasi Daftar Hadir',
+                        totalStudents: students.length,
+                        totalDays: Object.keys(attendanceHistory).length,
+                        totalJournals: learningJournal.length
+                    }
+                };
+                
+                // Store backup data globally
+                currentBackupData = backupData;
+                
+                // Convert to JSON string
+                const jsonString = JSON.stringify(backupData, null, 2);
+                
+                // Encode to base64 for code display
+                const backupString = btoa(jsonString);
+                
+                // Format for better readability (80 characters per line)
+                const formattedBackup = backupString.match(/.{1,80}/g).join('\n');
+                
+                document.getElementById('backupCodeDisplay').value = formattedBackup;
+                document.getElementById('backupCodeSection').classList.remove('hidden');
+                
+                // Show success message with data summary
+                const summary = `✅ Backup berhasil dibuat!\n\n📊 Data yang di-backup:\n• ${students.length} siswa\n• ${Object.keys(attendanceHistory).length} hari presensi\n• ${learningJournal.length} jurnal pembelajaran\n\n💡 Pilih metode download yang sesuai untuk device Anda.`;
+                
+                setTimeout(() => {
+                    alert(summary);
+                }, 500);
+                
+                // Scroll to backup section
+                document.getElementById('backupCodeSection').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Backup generation error:', error);
+                alert('❌ Gagal membuat backup. Silakan coba lagi atau hubungi support jika masalah berlanjut.');
+            }
+        }
+
+        function downloadBackupFile() {
+            if (!currentBackupData) {
+                alert('❌ Data backup tidak tersedia. Silakan buat backup terlebih dahulu.');
+                return;
+            }
+            
+            try {
+                const jsonString = JSON.stringify(currentBackupData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+                const today = getTodayDate();
+                
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.download = `backup_presensi_${today}.json`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+                
+                alert('📄 File JSON berhasil didownload!\n\n💡 File ini bisa dibuka di semua device dan mudah untuk transfer.');
+                
+            } catch (error) {
+                console.error('Download JSON error:', error);
+                alert('❌ Gagal mendownload file JSON. Silakan coba metode lain.');
+            }
+        }
+
+        function downloadBackupTxt() {
+            const backupCode = document.getElementById('backupCodeDisplay').value;
+            if (!backupCode) {
+                alert('❌ Kode backup tidak tersedia. Silakan buat backup terlebih dahulu.');
+                return;
+            }
+            
+            try {
+                const blob = new Blob([backupCode], { type: 'text/plain;charset=utf-8;' });
+                const today = getTodayDate();
+                
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                link.download = `backup_presensi_${today}.txt`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(url);
+                
+                alert('📝 File TXT berhasil didownload!\n\n💡 File ini kompatibel dengan semua aplikasi dan device.');
+                
+            } catch (error) {
+                console.error('Download TXT error:', error);
+                alert('❌ Gagal mendownload file TXT. Silakan coba metode lain.');
+            }
+        }
+
+        function copyBackupCode() {
+            const backupCode = document.getElementById('backupCodeDisplay');
+            backupCode.select();
+            backupCode.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                document.execCommand('copy');
+                alert('📋 Kode backup berhasil disalin!\n\n💡 Anda bisa mengirimnya via WhatsApp, email, atau aplikasi chat lainnya.');
+            } catch (err) {
+                alert('❌ Gagal menyalin kode. Silakan salin manual dengan Ctrl+C atau Cmd+C');
+            }
+        }
+
+        function showRestoreForm() {
+            document.getElementById('restoreFormSection').classList.remove('hidden');
+            document.getElementById('backupCodeSection').classList.add('hidden');
+            
+            // Scroll to restore form
+            document.getElementById('restoreFormSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideRestoreForm() {
+            document.getElementById('restoreFormSection').classList.add('hidden');
+            document.getElementById('restoreCodeInput').value = '';
+            document.getElementById('backupFileInput').value = '';
+        }
+
+        function loadBackupFile() {
+            const fileInput = document.getElementById('backupFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    
+                    // Try to parse as JSON first
+                    let backupData;
+                    try {
+                        backupData = JSON.parse(content);
+                    } catch (jsonError) {
+                        // If not JSON, treat as base64 encoded text
+                        document.getElementById('restoreCodeInput').value = content;
+                        alert('📁 File berhasil dimuat sebagai kode backup. Klik "Pulihkan Data" untuk melanjutkan.');
+                        return;
+                    }
+                    
+                    // If it's JSON, convert to our format and put in textarea
+                    if (backupData && typeof backupData === 'object') {
+                        document.getElementById('restoreCodeInput').value = JSON.stringify(backupData);
+                        alert('📁 File JSON berhasil dimuat! Klik "Pulihkan Data" untuk melanjutkan.');
+                    } else {
+                        throw new Error('Format file tidak valid');
+                    }
+                    
+                } catch (error) {
+                    console.error('File load error:', error);
+                    alert('❌ Gagal membaca file. Pastikan file adalah backup yang valid (.json atau .txt).');
+                    fileInput.value = '';
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function restoreFromBackup() {
+            const backupCode = document.getElementById('restoreCodeInput').value.trim();
+            
+            if (!backupCode) {
+                alert('❌ Masukkan kode backup atau pilih file backup terlebih dahulu');
+                return;
+            }
+            
+            if (!confirm('⚠️ PERHATIAN!\n\nMemulihkan data akan MENGGANTI SEMUA data yang ada saat ini.\n\nApakah Anda yakin ingin melanjutkan?')) {
+                return;
+            }
+            
+            try {
+                let backupData;
+                
+                // Try to parse as JSON first (for file-based backup)
+                try {
+                    backupData = JSON.parse(backupCode);
+                } catch (jsonError) {
+                    // If JSON parsing fails, try base64 decoding
+                    try {
+                        const cleanBackupCode = backupCode.replace(/[\s\n\r\t]/g, '');
+                        
+                        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleanBackupCode)) {
+                            throw new Error('Format tidak valid');
+                        }
+                        
+                        const backupString = atob(cleanBackupCode);
+                        backupData = JSON.parse(backupString);
+                    } catch (base64Error) {
+                        throw new Error('Format kode backup tidak valid. Pastikan Anda menyalin kode lengkap atau memilih file backup yang benar.');
+                    }
+                }
+                
+                // Validate backup data structure
+                if (!backupData || typeof backupData !== 'object') {
+                    throw new Error('Data backup tidak valid atau rusak');
+                }
+                
+                if (!Array.isArray(backupData.students)) {
+                    throw new Error('Data siswa tidak ditemukan atau tidak valid dalam backup');
+                }
+                
+                if (!backupData.attendanceHistory || typeof backupData.attendanceHistory !== 'object') {
+                    throw new Error('Data riwayat presensi tidak ditemukan atau tidak valid dalam backup');
+                }
+                
+                if (!Array.isArray(backupData.learningJournal)) {
+                    backupData.learningJournal = []; // Set empty array if not found
+                }
+                
+                // Show progress
+                const restoreButton = document.querySelector('button[onclick="restoreFromBackup()"]');
+                const originalText = restoreButton.textContent;
+                restoreButton.textContent = '⏳ Memulihkan...';
+                restoreButton.disabled = true;
+                
+                // Restore data
+                students = [...backupData.students];
+                attendanceHistory = {...backupData.attendanceHistory};
+                learningJournal = [...backupData.learningJournal];
+                
+                // Save to localStorage
+                saveData();
+                
+                // Refresh UI completely
+                setTimeout(() => {
+                    renderStudentList();
+                    updateStats();
+                    renderAllStudentsList();
+                    loadJournalEntries();
+                    populateJournalClassOptions();
+                    
+                    // Refresh current tab content
+                    const activeTab = document.querySelector('.tab-button.text-blue-600');
+                    if (activeTab) {
+                        const tabName = activeTab.id.replace('Tab', '');
+                        if (tabName === 'history') {
+                            loadRecentHistory();
+                        } else if (tabName === 'reports') {
+                            loadReports();
+                        }
+                    }
+                    
+                    // Reset button
+                    restoreButton.textContent = originalText;
+                    restoreButton.disabled = false;
+                    
+                    closeSyncModal();
+                    
+                    const backupDate = backupData.timestamp ? new Date(backupData.timestamp).toLocaleString('id-ID') : 'Tidak diketahui';
+                    const successMessage = `✅ DATA BERHASIL DIPULIHKAN!\n\n📊 Detail Backup:\n• ${students.length} siswa\n• ${Object.keys(attendanceHistory).length} hari presensi\n• ${learningJournal.length} jurnal pembelajaran\n• Dibuat: ${backupDate}\n\n🔄 Semua data telah dimuat ulang.`;
+                    
+                    alert(successMessage);
+                    
+                    // Optional page refresh for complete reload
+                    setTimeout(() => {
+                        if (confirm('💡 Untuk memastikan semua data ter-load sempurna, disarankan untuk refresh halaman.\n\nRefresh sekarang?')) {
+                            location.reload();
+                        }
+                    }, 1500);
+                    
+                }, 500);
+                
+            } catch (error) {
+                console.error('Restore error:', error);
+                
+                // Reset button on error
+                const restoreButton = document.querySelector('button[onclick="restoreFromBackup()"]');
+                if (restoreButton) {
+                    restoreButton.textContent = '🔄 Pulihkan Data';
+                    restoreButton.disabled = false;
+                }
+                
+                let errorMessage = '❌ GAGAL MEMULIHKAN DATA\n\n';
+                
+                if (error.message.includes('tidak valid') || error.message.includes('Format')) {
+                    errorMessage += '🔍 Masalah Format:\n';
+                    errorMessage += '• Pastikan kode backup disalin LENGKAP\n';
+                    errorMessage += '• Jangan ada spasi atau karakter tambahan\n';
+                    errorMessage += '• Atau pilih file backup (.json/.txt) yang benar\n\n';
+                } else if (error.message.includes('tidak ditemukan')) {
+                    errorMessage += '📂 Masalah Data:\n';
+                    errorMessage += '• File backup mungkin rusak atau tidak lengkap\n';
+                    errorMessage += '• Coba gunakan backup yang lebih baru\n\n';
+                } else {
+                    errorMessage += '⚠️ Error: ' + error.message + '\n\n';
+                }
+                
+                errorMessage += '💡 Solusi:\n';
+                errorMessage += '1. Coba buat backup baru dari device lain\n';
+                errorMessage += '2. Pastikan menggunakan aplikasi versi yang sama\n';
+                errorMessage += '3. Gunakan file backup (.json) untuk hasil terbaik';
+                
+                alert(errorMessage);
+            }
+        }
+
+        // Event listeners
+        document.getElementById('searchStudent').addEventListener('input', (e) => {
+            renderStudentList(e.target.value);
+        });
+
+        document.getElementById('searchAllStudents').addEventListener('input', (e) => {
+            renderAllStudentsList(e.target.value);
+        });
+
+        // Set today's date as default for history
+        document.getElementById('historyDate').value = getTodayDate();
+
+        // Initialize app
+        function initApp() {
+            initTodayAttendance();
+            renderStudentList();
+            updateStats();
+            
+            // Add some sample students if none exist
+            if (students.length === 0) {
+                const sampleStudents = [
+                    { id: generateId(), name: 'Ahmad Rizki', studentId: '12345', class: 'XII IPA 1' },
+                    { id: generateId(), name: 'Siti Nurhaliza', studentId: '12346', class: 'XII IPA 1' },
+                    { id: generateId(), name: 'Budi Santoso', studentId: '12347', class: 'XII IPA 2' }
+                ];
+                
+                students = sampleStudents;
+                initTodayAttendance();
+                saveData();
+                renderStudentList();
+                updateStats();
+            }
+        }
+
+        // Start the app
+        initApp();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'979a19d3e74445c8',t:'MTc1Njk1MzQwMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
