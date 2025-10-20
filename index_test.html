@@ -380,7 +380,7 @@ mb-6 text-gray-800">☁️ Sinkronisasi Data</h2>
         // KONEKSI GOOGLE SHEETS (PENAMBAHAN BARU)
         // ===============================================
         // *** GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI LANGKAH 2 ***
-        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwn7SucRHQvsHl_02dOmAvvs5Mg4VLtKlh2jzXV5rv0EzPiF2J76kZlLCxq8NjyxASP/exec"; 
+        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbwn7SucRHQvsHl_02dOmAvvs5Mg4VLtKlh2jzXV5rv0EzPiF2J76kZlLCxq8NjyxASP/exec"; 
 
         // Fungsi untuk menampilkan notifikasi temporer
         function showTemporaryNotification(message, className) {
@@ -408,7 +408,7 @@ mb-6 text-gray-800">☁️ Sinkronisasi Data</h2>
 
         // Fungsi baru untuk sinkronisasi data ke Google Sheets
         function syncToGoogleSheets() {
-            if (GOOGLE_SHEET_WEB_APP_URL === "https://script.google.com/macros/s/AKfycbwn7SucRHQvsHl_02dOmAvvs5Mg4VLtKlh2jzXV5rv0EzPiF2J76kZlLCxq8NjyxASP/exec") {
+            if (GOOGLE_SHEET_WEB_APP_URL === "https://script.google.com/a/macros/guru.smp.belajar.id/s/AKfycbwn7SucRHQvsHl_02dOmAvvs5Mg4VLtKlh2jzXV5rv0EzPiF2J76kZlLCxq8NjyxASP/exec") {
                 console.warn("Sinkronisasi diabaikan: Harap ganti GOOGLE_SHEET_WEB_APP_URL dengan URL Apps Script Anda.");
                 showTemporaryNotification("⚠️ Atur URL Sheets di baris 330!", "bg-yellow-500");
                 return;
