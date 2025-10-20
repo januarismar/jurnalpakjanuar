@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Daftar Hadir</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">📋 Aplikasi Daftar Hadir</h1>
+                    <p class="text-gray-600">Kelola presensi siswa dengan mudah dan efisien</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="showAddStudentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 
+py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        ➕ Tambah Siswa
+                    </button>
+                    <button onclick="showImportModal()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        📥 Import Data
+                    </button>
+                    <button onclick="exportData()" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all 
+duration-200 shadow-md hover:shadow-lg">
+                        📤 Export
+                    </button>
+                    <button onclick="showSyncModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        ☁️ Sinkronisasi
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Total Siswa</p>
+                        <p id="totalStudents" class="text-2xl font-bold text-gray-800">0</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <span class="text-2xl">👥</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Hadir Hari Ini</p>
+                        <p id="presentToday" class="text-2xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-full">
+                        <span class="text-2xl">✅</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Tidak Hadir</p>
+                        <p id="absentToday" class="text-2xl font-bold text-red-600">0</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-full">
+                        <span class="text-2xl">❌</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md fade-in">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Persentase Hadir</p>
+                        <p id="attendanceRate" class="text-2xl font-bold text-indigo-600">0%</p>
+                    </div>
+                    <div class="bg-indigo-100 p-3 rounded-full">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg mb-6 fade-in">
+            <div class="flex flex-wrap border-b border-gray-200">
+                <button onclick="showTab('attendance')" id="attendanceTab" class="tab-button px-6 py-4 font-medium text-blue-600 border-b-2 border-blue-600">
+                    📝 Presensi Hari Ini
+                </button>
+                <button onclick="showTab('history')" id="historyTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    📅 Riwayat Presensi
+                </button>
+                <button onclick="showTab('reports')" id="reportsTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    📈 Laporan
+                </button>
+                <button onclick="showTab('journal')" id="journalTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    📚 Jurnal Pembelajaran
+                </button>
+                <button onclick="showTab('students')" id="studentsTab" class="tab-button px-6 py-4 font-medium text-gray-500 hover:text-gray-700">
+                    👥 Kelola 
+Siswa
+                </button>
+            </div>
+
+            <div id="attendanceContent" class="tab-content p-6">
+                <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                    <div 
+class="flex-1">
+                        <input type="text" id="searchStudent" placeholder="🔍 Cari nama siswa..." 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="markAllPresent()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                            ✅ Semua Hadir
+                        </button>
+                        <button onclick="markAllAbsent()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                            ❌ Semua Tidak Hadir
+                        </button>
+                        <button onclick="resetAttendance()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </div>
+                <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    </div>
+            </div>
+
+            <div id="historyContent" class="tab-content p-6 hidden">
+                <div class="flex flex-col lg:flex-row gap-4 mb-6">
+                    <input type="date" id="historyDate" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <button onclick="loadHistoryForDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium">
+                        📅 Lihat Riwayat
+                    </button>
+                </div>
+                <div id="historyList" class="space-y-4">
+                    </div>
+            </div>
+
+            <div id="reportsContent" class="tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">📊 Statistik Kehadiran</h3>
+                        <div id="attendanceStats" class="space-y-3">
+                            </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-4">🏆 Siswa Terbaik</h3>
+                        <div id="topStudents" class="space-y-3">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="journalContent" class="tab-content p-6 hidden">
+                <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                    <button onclick="showAddJournalModal()" class="bg-blue-600 hover:bg-blue-700 
+text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg">
+                        ➕ Tambah Jurnal Hari Ini
+                    </button>
+                    <select id="filterJournalClass" onchange="filterJournalByClass()" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Kelas</option>
+                    </select>
+                    <input type="date" id="filterJournalDate" onchange="filterJournalByDate()" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="journalList" class="space-y-4">
+                    </div>
+            </div>
+
+            <div id="studentsContent" class="tab-content p-6 hidden">
+                <div class="mb-6">
+                    <input type="text" id="searchAllStudents" placeholder="🔍 Cari siswa untuk diedit atau dihapus..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="allStudentsList" class="space-y-3">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addStudentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full 
+mx-4 fade-in">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">➕ Tambah Siswa Baru</h2>
+            <div class="space-y-4">
+                <input type="text" id="studentName" placeholder="Nama lengkap siswa" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="studentId" placeholder="NIS/ID Siswa (opsional)" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="studentClass" placeholder="Kelas (contoh: XII IPA 1)" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="addStudent()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium">
+                    Tambah
+                </button>
+                <button onclick="closeAddStudentModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 
+py-3 rounded-xl font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 fade-in max-h-[90vh] 
+overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">📚 Tambah Jurnal Pembelajaran</h2>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="date" id="journalDate" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <select id="journalClass" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        <option value="">Pilih Kelas</option>
+                    </select>
+                </div>
+                <input type="text" id="journalSubject" placeholder="Mata Pelajaran (contoh: Matematika, Bahasa Indonesia)" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <input type="text" id="journalTopic" placeholder="Topik/Materi Pembelajaran" 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                <textarea id="journalDescription" rows="4" placeholder="Deskripsi detail pembelajaran, aktivitas, 
+dan catatan penting..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="time" id="journalStartTime" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                    <input type="time" id="journalEndTime" class="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500">
+                </div>
+                <textarea id="journalNotes" rows="3" placeholder="Catatan tambahan, evaluasi, atau rencana tindak lanjut..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="addJournalEntry()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium">
+                    Simpan Jurnal
+                </button>
+                <button onclick="closeAddJournalModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 
+rounded-xl font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="importModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 fade-in">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">📥 Import Data Siswa</h2>
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-xl">
+                    <p class="text-sm text-blue-800 mb-2"><strong>Format:</strong> Satu siswa per baris</p>
+                    <p class="text-sm text-blue-700">Nama |
+NIS | Kelas (pisahkan dengan |)</p>
+                    <p class="text-sm text-blue-600 mt-1"><em>Contoh: Ahmad Rizki | 12345 |
+XII IPA 1</em></p>
+                </div>
+                <textarea id="importData" rows="8" placeholder="Masukkan data siswa di sini..." 
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="importStudents()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium">
+                    Import
+                </button>
+                <button onclick="closeImportModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="syncModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 fade-in max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold 
+mb-6 text-gray-800">☁️ Sinkronisasi Data</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-blue-50 p-6 rounded-xl border-2 border-blue-200">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-3">📤 Backup Data</h3>
+                    <p class="text-sm text-blue-700 mb-4">Simpan semua data Anda ke file atau kode backup yang bisa digunakan di device lain</p>
+                    <button onclick="generateBackupCode()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium">
+                        Buat Backup
+                    </button>
+                </div>
+                
+                <div class="bg-green-50 p-6 rounded-xl border-2 border-green-200">
+                    <h3 class="text-lg font-semibold text-green-800 mb-3">📥 Restore Data</h3>
+                    <p class="text-sm text-green-700 mb-4">Pulihkan data dari file backup atau kode backup yang sudah Anda buat sebelumnya</p>
+                    <button onclick="showRestoreForm()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium">
+                        Pulihkan Data
+                    </button>
+                </div>
+            </div>
+
+            <div id="backupCodeSection" class="hidden mb-6">
+                <div class="bg-gray-50 p-6 rounded-xl border-2 border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-3">💾 Backup Berhasil Dibuat!</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                        <button onclick="downloadBackupFile()" class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium">
+                            📄 Download JSON
+                        </button>
+                        <button onclick="downloadBackupTxt()" class="bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-medium">
+                            📝 Download TXT
+                        </button>
+                        <button onclick="copyBackupCode()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-medium">
+                            📋 Salin Kode
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg border border-gray-300 mb-4">
+                        <textarea id="backupCodeDisplay" readonly rows="6" class="w-full text-sm font-mono resize-none border-none focus:outline-none"></textarea>
+                    </div>
+                    
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <p class="text-sm text-blue-800">
+                            <strong>💡 Rekomendasi:</strong><br>
+                            • <strong>File JSON</strong> - Paling mudah untuk transfer antar device<br>
+                            • <strong>File TXT</strong> - Kompatibel dengan semua aplikasi<br>
+                            • <strong>Salin Kode</strong> - Untuk transfer cepat via chat/email
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="restoreFormSection" class="hidden mb-6">
+                <div class="bg-yellow-50 p-6 rounded-xl border-2 border-yellow-200">
+                    <h3 class="text-lg font-semibold text-yellow-800 mb-3">⚠️ Pulihkan Data</h3>
+                    <p class="text-sm text-yellow-700 mb-4">Pilih file backup atau masukkan kode backup untuk memulihkan data.
+                        <strong>Perhatian:</strong> Ini akan mengganti semua data yang ada saat ini.</p>
+                    
+                    <div class="mb-4 p-4 bg-white rounded-lg border-2 border-dashed border-yellow-300">
+                        <label class="block text-sm font-medium text-yellow-800 mb-2">📁 Pilih File Backup:</label>
+                        <input type="file" id="backupFileInput" accept=".json,.txt" 
+                               class="w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 text-sm"
+                               onchange="loadBackupFile()">
+                        <p class="text-xs text-yellow-600 mt-1">File yang didukung: .json, .txt</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-yellow-800 mb-2">📝 Atau Tempel Kode Backup:</label>
+                        <textarea id="restoreCodeInput" rows="6" placeholder="Tempel kode backup di sini..." 
+                                  class="w-full px-4 py-3 border border-yellow-300 rounded-xl focus:ring-2 focus:ring-yellow-500 text-sm font-mono"></textarea>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button onclick="restoreFromBackup()" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-xl font-medium">
+                            🔄 Pulihkan Data
+                        </button>
+                        <button onclick="hideRestoreForm()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-50 p-6 rounded-xl border-2 border-indigo-200 mb-6">
+                <h3 class="text-lg font-semibold text-indigo-800 mb-3">📖 Cara Sinkronisasi Cross-Platform</h3>
+                <ol class="text-sm text-indigo-700 space-y-2">
+                    <li><strong>1. Backup:</strong> Klik "Buat Backup" dan pilih "Download JSON" (paling mudah)</li>
+                    <li><strong>2. Transfer:</strong> Kirim file via email, WhatsApp, atau simpan di Google Drive</li>
+                    <li><strong>3. Restore:</strong> Di device lain, pilih file backup dan klik "Pulihkan Data"</li>
+                    <li><strong>4. Verifikasi:</strong> Pastikan semua data sudah ter-load dengan benar</li>
+                </ol>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeSyncModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-3 rounded-xl font-medium">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificationContainer" class="fixed top-5 right-5 z-[100] space-y-3">
+        </div>
+
+    <script>
+        // ===============================================
+        // KONEKSI GOOGLE SHEETS (PENAMBAHAN BARU)
+        // ===============================================
+        // *** GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI LANGKAH 2 ***
+        const GOOGLE_SHEET_WEB_APP_URL = "GANTI_DENGAN_URL_GOOGLE_APPS_SCRIPT_ANDA"; 
+
+        // Fungsi untuk menampilkan notifikasi temporer
+        function showTemporaryNotification(message, className) {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            notification.className = `${className} text-white px-5 py-3 rounded-lg shadow-xl font-medium max-w-xs transition-all duration-300 transform translate-x-full opacity-0`;
+            notification.textContent = message;
+
+            container.appendChild(notification);
+            
+            // Animasi masuk
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full', 'opacity-0');
+                notification.classList.add('translate-x-0', 'opacity-100');
+            }, 10);
+
+            // Animasi keluar setelah 4 detik
+            setTimeout(() => {
+                notification.classList.remove('translate-x-0', 'opacity-100');
+                notification.classList.add('translate-x-full', 'opacity-0');
+                // Hapus elemen setelah animasi keluar
+                notification.addEventListener('transitionend', () => notification.remove());
+            }, 4000);
+        }
+
+        // Fungsi baru untuk sinkronisasi data ke Google Sheets
+        function syncToGoogleSheets() {
+            if (GOOGLE_SHEET_WEB_APP_URL === "GANTI_DENGAN_URL_GOOGLE_APPS_SCRIPT_ANDA") {
+                console.warn("Sinkronisasi diabaikan: Harap ganti GOOGLE_SHEET_WEB_APP_URL dengan URL Apps Script Anda.");
+                showTemporaryNotification("⚠️ Atur URL Sheets di baris 330!", "bg-yellow-500");
+                return;
+            }
+
+            const dataToSend = {
+                action: "SAVE_ALL_DATA",
+                data: {
+                    timestamp: new Date().toISOString(),
+                    students: students,
+                    attendanceHistory: attendanceHistory,
+                    learningJournal: learningJournal
+                }
+            };
+
+            fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(dataToSend)
+            })
+            .then(response => {
+                // Karena menggunakan 'no-cors', tidak bisa membaca response, 
+                // jadi kita asumsikan berhasil jika request terkirim.
+                console.log("Data request berhasil dikirim ke Google Sheets. Cek Sheets untuk verifikasi.");
+                showTemporaryNotification("☁️ Data berhasil disinkronkan!", "bg-indigo-600");
+            })
+            .catch(error => {
+                console.error('Gagal mengirim data ke Google Sheets:', error);
+                showTemporaryNotification("❌ Gagal Sinkronisasi!", "bg-red-600");
+            });
+        }
+        
+        // ===============================================
+        // KODE ASLI APLIKASI (DIUBAH SEDIKIT)
+        // ===============================================
+
+        // Data storage using localStorage for persistence
+        let students = JSON.parse(localStorage.getItem('attendanceStudents')) ||
+[];
+        let attendanceHistory = JSON.parse(localStorage.getItem('attendanceHistory')) || {};
+        let learningJournal = JSON.parse(localStorage.getItem('learningJournal')) || [];
+        // Get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // Save data to localStorage (SUDAH DIUBAH: MENAMBAH syncToGoogleSheets)
+        function saveData() {
+            localStorage.setItem('attendanceStudents', JSON.stringify(students));
+            localStorage.setItem('attendanceHistory', JSON.stringify(attendanceHistory));
+            localStorage.setItem('learningJournal', JSON.stringify(learningJournal));
+            
+            // Panggil fungsi sinkronisasi ke Google Sheets
+            syncToGoogleSheets(); 
+        }
+
+        // Initialize today's attendance if not exists
+        function initTodayAttendance() {
+            const today = getTodayDate();
+            if (!attendanceHistory[today]) {
+                attendanceHistory[today] = {};
+                students.forEach(student => {
+                    attendanceHistory[today][student.id] = 'not_marked';
+                });
+                saveData();
+            }
+        }
+
+        // Generate unique ID for students
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Update statistics
+        function updateStats() {
+            const today = getTodayDate();
+            const todayAttendance = attendanceHistory[today] || {};
+            
+            const totalStudents = students.length;
+            const presentCount = Object.values(todayAttendance).filter(status => status === 'present').length;
+            const absentCount = Object.values(todayAttendance).filter(status => status === 'absent').length;
+            const attendanceRate = totalStudents > 0 ?
+                Math.round((presentCount / totalStudents) * 100) : 0;
+
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('presentToday').textContent = presentCount;
+            document.getElementById('absentToday').textContent = absentCount;
+            document.getElementById('attendanceRate').textContent = attendanceRate + '%';
+        }
+
+        // Render student list for attendance
+        function renderStudentList(searchTerm = '') {
+            const today = getTodayDate();
+            const todayAttendance = attendanceHistory[today] || {};
+            const studentList = document.getElementById('studentList');
